@@ -2,6 +2,30 @@ import cirq
 import numpy as np
 
 
+__all__ = (
+    'PlusGate',
+    'SubspaceSwapGate',
+    'SingleQuditSubspaceGate',
+    'FlipGate',
+
+    'PlusOne',
+    'MinusOne',
+    'F01',
+    'F02',
+    'F12',
+    'SWAP2',
+    'SWAP3',
+    'Ry01',
+    'Ry12',
+    'C1F01',
+    'C2F01',
+    'C1F12',
+    'C2F12',
+    'C1PlusOne',
+    'C1MinusOne',
+)
+
+
 class PlusGate(cirq.SingleQubitGate):
     def __init__(self, dimension, increment=1):
         self.dimension = dimension
