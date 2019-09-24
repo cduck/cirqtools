@@ -64,23 +64,38 @@ class ClassicalSimulator(cirq.SimulatesSamples,
                     cirq.is_measurement(potential_op) or
                     cirq.op_gate_isinstance(potential_op, cirq.ResetChannel))
 
+        def simulate_op(op, temp_state):
+            indices = [qubit_map[q] for q in op.qubits]
+            if cirq.op_gate_isinstance(op, cirq.ResetChannel):
+                self._simulate_reset(op, cirq.ResetChannel)
+            elif cirq.is_measurement(op):
+                if perform_measurements:
+                    self._simulate_measurement(op, temp_state, indices, measurements)
+            elif cirq.has_mixture(op):
+                self._simulate_mixture(op, temp_state, indices)
+            else:
+                decomp_ops = cirq.decompose_once(op, default=None)
+                if decomp_ops is None:
+                    self._simulate_unitary(op, temp_state, indices)
+                else:
+                    try:
+                        temp2_state = state.copy()
+                        for sub_op in cirq.flatten_op_tree(decomp_ops):
+                            simulate_op(sub_op, temp2_state)
+                        temp_state[...] = temp2_state
+                    except ValueError:
+                        # Non-classical unitary in the decomposition
+                        print('Back up to', op)
+                        self._simulate_unitary(op, temp_state, indices)
+
+
         for moment in circuit:
             measurements = defaultdict(list)
             known_ops = cirq.decompose(moment, keep=keep,
                                        on_stuck_raise=on_stuck)
             for op in known_ops:
-                indices = [qubit_map[q] for q in op.qubits]
-                if cirq.op_gate_isinstance(op, cirq.ResetChannel):
-                    self._simulate_reset(op, state, indices)
-                elif cirq.has_unitary(op):
-                    self._simulate_unitary(op, state, indices)
-                elif cirq.is_measurement(op):
-                    if perform_measurements:
-                        self._simulate_measurement(op, state, indices,
-                                                   measurements)
-                elif cirq.has_mixture(op):
-                    self._simulate_mixture(op, state, indices)
-            yield ClassicalSimulatorStep(list(state), measurements, qubit_map)
+                simulate_op(op, state)
+            yield ClassicalSimulatorStep(state.copy(), measurements, qubit_map)
 
     def _simulate_reset(op, state, indices):
         reset = cirq.op_gate_of_type(op, cirq.ResetChannel)
