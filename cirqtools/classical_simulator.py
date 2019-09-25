@@ -7,6 +7,9 @@ import numpy as np
 
 class ClassicalSimulator(cirq.SimulatesSamples,
                          cirq.SimulatesIntermediateState):
+    """An efficient simulator that can only simulate unitary gates that are
+    permutations of the basis states."""
+
     def _run(self, circuit, param_resolver, repetitions):
         param_resolver = param_resolver or cirq.ParamResolver({})
         resolved_circuit = cirq.resolve_parameters(circuit, param_resolver)
@@ -55,7 +58,7 @@ class ClassicalSimulator(cirq.SimulatesSamples,
 
         def on_stuck(bad_op):
             return TypeError(
-                "Can't simulate unknown operations that don't specify a"
+                "Can't simulate unknown operations that don't specify a "
                 "unitary or a decomposition. {!r}".format(bad_op))
 
         def keep(potential_op):
@@ -79,13 +82,12 @@ class ClassicalSimulator(cirq.SimulatesSamples,
                     self._simulate_unitary(op, temp_state, indices)
                 else:
                     try:
-                        temp2_state = state.copy()
+                        temp2_state = temp_state.copy()
                         for sub_op in cirq.flatten_op_tree(decomp_ops):
                             simulate_op(sub_op, temp2_state)
                         temp_state[...] = temp2_state
                     except ValueError:
                         # Non-classical unitary in the decomposition
-                        print('Back up to', op)
                         self._simulate_unitary(op, temp_state, indices)
 
 
