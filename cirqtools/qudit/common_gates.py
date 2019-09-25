@@ -149,7 +149,7 @@ class FlipGate(SingleQuditSubspaceGate):
 
     def _circuit_diagram_info_(self, args):
         if args.use_unicode_characters:
-            return '[{}⇄{}]'.format(self.flip_a, self.flip_b)
+            return '[{}<->{}]'.format(self.flip_a, self.flip_b)
         return cirq.CircuitDiagramInfo((
             '[{}<->{}]'.format(self.flip_a, self.flip_b),))
 
