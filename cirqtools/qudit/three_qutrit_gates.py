@@ -53,8 +53,9 @@ class TwoControlPlusOneGate(cirq.Gate):
 
     def _circuit_diagram_info_(self, args):
         q0, q1 = cirq.LineQid.for_qid_shape((3, 3))
-        return cirq.circuit_diagram_info(common_gates.PlusOne.controlled_by(
-            q0, q1, control_values=(self.c0_val, self.c1_val)))
+        return cirq.circuit_diagram_info(common_gates.PlusOne.controlled(
+            control_values=(self.c0_val, self.c1_val),
+            control_qid_shape=(3, 3)))
 
 
 class TwoControlMinusOneGate(cirq.Gate):
@@ -77,8 +78,9 @@ class TwoControlMinusOneGate(cirq.Gate):
 
     def _circuit_diagram_info_(self, args):
         q0, q1 = cirq.LineQid.for_qid_shape((3, 3))
-        return cirq.circuit_diagram_info(common_gates.MinusOne.controlled_by(
-            q0, q1, control_values=(self.c0_val, self.c1_val)))
+        return cirq.circuit_diagram_info(common_gates.MinusOne.controlled(
+            control_values=(self.c0_val, self.c1_val),
+            control_qid_shape=(3, 3)))
 
 
 C1C1PlusOne = TwoControlPlusOneGate(1, 1)
