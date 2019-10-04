@@ -7,22 +7,6 @@ __all__ = (
     'SubspaceSwapGate',
     'SingleQuditSubspaceGate',
     'FlipGate',
-
-    'PlusOne',
-    'MinusOne',
-    'F01',
-    'F02',
-    'F12',
-    'SWAP2',
-    'SWAP3',
-    'Ry01',
-    'Ry12',
-    'C1F01',
-    'C2F01',
-    'C1F12',
-    'C2F12',
-    'C1PlusOne',
-    'C1MinusOne',
 )
 
 
@@ -152,23 +136,3 @@ class FlipGate(SingleQuditSubspaceGate):
             return '[{}<->{}]'.format(self.flip_a, self.flip_b)
         return cirq.CircuitDiagramInfo((
             '[{}<->{}]'.format(self.flip_a, self.flip_b),))
-
-
-# Qutrit gates
-PlusOne = PlusGate(3)
-MinusOne = PlusGate(3, -1)
-F01 = FlipGate(3, 0, 1)  # SingleQuditSubspaceGate(cirq.X, 3, (0, 1))
-F02 = FlipGate(3, 0, 2)  # SingleQuditSubspaceGate(cirq.X, 3, (0, 2))
-F12 = FlipGate(3, 1, 2)  # SingleQuditSubspaceGate(cirq.X, 3, (1, 2))
-SWAP2 = SubspaceSwapGate(3, 3, 2, 2)
-SWAP3 = SubspaceSwapGate(3, 3, 3, 3)
-Ry01 = lambda theta: SingleQuditSubspaceGate(cirq.Ry(theta), 3, (0, 1))
-Ry12 = lambda theta: SingleQuditSubspaceGate(cirq.Ry(theta), 3, (1, 2))
-C1F01 = cirq.ControlledGate(F01, control_values=(1,), control_qid_shape=(3,))
-C2F01 = cirq.ControlledGate(F01, control_values=(2,), control_qid_shape=(3,))
-C1F12 = cirq.ControlledGate(F12, control_values=(1,), control_qid_shape=(3,))
-C2F12 = cirq.ControlledGate(F12, control_values=(2,), control_qid_shape=(3,))
-C1PlusOne = cirq.ControlledGate(PlusOne, control_values=(1,),
-                                control_qid_shape=(3,))
-C1MinusOne = cirq.ControlledGate(MinusOne, control_values=(1,),
-                                 control_qid_shape=(3,))
