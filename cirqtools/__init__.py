@@ -4,4 +4,9 @@ from .classical_simulator import (
     ClassicalSimulatorStep,
 )
 
+from .feynman_path_simulator import (
+    FeynmanPathSimulator,
+    FeynmanPathSimulatorStep,
+)
+
 from . import qudit
