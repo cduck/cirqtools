@@ -73,7 +73,8 @@ class ClassicalSimulator(cirq.SimulatesSamples,
                 self._simulate_reset(op, cirq.ResetChannel)
             elif cirq.is_measurement(op):
                 if perform_measurements:
-                    self._simulate_measurement(op, temp_state, indices, measurements)
+                    self._simulate_measurement(
+                        op, temp_state, indices, measurements)
             elif cirq.has_mixture(op):
                 self._simulate_mixture(op, temp_state, indices)
             else:
@@ -138,8 +139,8 @@ class ClassicalSimulator(cirq.SimulatesSamples,
             # The output state vector does not represent a single basis state
             raise ValueError(
                 "Can't simulate non-classical operations. "
-                "The operation's unitary is not a permuation matrix: {!r}\n{!r}"
-                "".format(op, unitary))
+                "The operation's unitary is not a permutation matrix: "
+                "{!r}\n{!r}".format(op, unitary))
         result_state = cirq.big_endian_int_to_digits(result_val, base=op_shape)
         state[indices] = result_state
 
