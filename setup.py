@@ -31,7 +31,7 @@ setup(
         'Framework :: Jupyter',
     ],
     install_requires = [
-        'cirq',
+        'cirq-dev',
     ],
     extras_require = {
         'dev': [
