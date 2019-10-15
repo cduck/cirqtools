@@ -11,69 +11,6 @@ from . import qudit
 class PathLimitError(Exception): pass
 
 
-class _State:
-    def __init__(self, qid_shape, path_limit, tolerance, state=None):
-        self.qid_shape = qid_shape
-        self.path_limit = path_limit
-        if state is None:
-            state = Counter({(0,) * len(qid_shape): 1})
-        self.state = state
-        self.buffer_state = Counter()
-        self.tolerance = tolerance
-
-    @staticmethod
-    def from_basis_state(int_state, qid_shape, *args, **kwargs):
-        digits = cirq.big_endian_int_to_digits(int_state, base=qid_shape)
-        state = Counter({tuple(digits): 1})
-        return _State(qid_shape, *args, **kwargs, state=state)
-
-    def apply_unitary(self, indices, unitary):
-        sub_shape = [self.qid_shape[i] for i in indices]
-        self.buffer_state.clear()
-        for digits, amplitude in self.state.items():
-            new_digits = list(digits)
-            if np.isclose(amplitude, 0, rtol=1, atol=self.tolerance):
-                continue
-            target_val = cirq.big_endian_digits_to_int(
-                (digits[i] for i in indices), base=sub_shape)
-            result_wavefunction = unitary[:, target_val]
-            for result_amp, new_targ_digits in zip(
-                    result_wavefunction,
-                    itertools.product(*(range(d) for d in sub_shape))):
-                if np.isclose(result_amp, 0, rtol=1, atol=self.tolerance):
-                    continue
-                for i, dig in zip(indices, new_targ_digits):
-                    new_digits[i] = dig
-                self.buffer_state[tuple(new_digits)] += amplitude * result_amp
-        self.state, self.buffer_state = self.buffer_state, self.state
-        if len(self.state) > self.path_limit:
-            raise PathLimitError
-
-    def _sample_measurement(self, indices, repetitions):
-        indices = list(indices)
-        amps = np.array(list(self.state.values()), dtype=complex)
-        states = np.array(list(self.state.keys()), dtype=np.uint8)
-        probs = np.abs(amps) ** 2
-        choice_i = np.random.choice(np.arange(len(probs)),
-                                    size=repetitions,
-                                    replace=True,
-                                    p=probs)
-        choice = states[choice_i,:][:,indices]
-        return choice, indices, states, amps
-
-    def sample_measurement(self, indices, repetitions=1):
-        return _sample_measurement(indices, repetitions)[0]
-
-    def apply_measurement(self, indices):
-        choice, indices, states, amps = self._sample_measurement(indices, 1)
-        choice = choice[0]
-        mask = np.all(states[:,indices] == choice, axis=1)
-        amps[mask] /= np.linalg.norm(amps[mask])
-        self.state.clear()
-        self.state.update(dict(zip(map(tuple, states[mask]), amps[mask])))
-        return choice
-
-
 class FeynmanPathSimulator(cirq.SimulatesSamples,
                            cirq.SimulatesIntermediateState):
     def __init__(self, path_limit=2**8, tolerance=1e-12):
@@ -211,3 +148,66 @@ class FeynmanPathSimulatorStep(cirq.StepResult):
     def sample(self, qubits, repetitions=1):
         indices = [self.qubit_map[q] for q in qubits]
         return self._state.sample_measurement(indices, repetitions)
+
+
+class _State:
+    def __init__(self, qid_shape, path_limit, tolerance, state=None):
+        self.qid_shape = qid_shape
+        self.path_limit = path_limit
+        if state is None:
+            state = Counter({(0,) * len(qid_shape): 1})
+        self.state = state
+        self.buffer_state = Counter()
+        self.tolerance = tolerance
+
+    @staticmethod
+    def from_basis_state(int_state, qid_shape, *args, **kwargs):
+        digits = cirq.big_endian_int_to_digits(int_state, base=qid_shape)
+        state = Counter({tuple(digits): 1})
+        return _State(qid_shape, *args, **kwargs, state=state)
+
+    def apply_unitary(self, indices, unitary):
+        sub_shape = [self.qid_shape[i] for i in indices]
+        self.buffer_state.clear()
+        for digits, amplitude in self.state.items():
+            new_digits = list(digits)
+            if np.isclose(amplitude, 0, rtol=1, atol=self.tolerance):
+                continue
+            target_val = cirq.big_endian_digits_to_int(
+                (digits[i] for i in indices), base=sub_shape)
+            result_wavefunction = unitary[:, target_val]
+            for result_amp, new_targ_digits in zip(
+                    result_wavefunction,
+                    itertools.product(*(range(d) for d in sub_shape))):
+                if np.isclose(result_amp, 0, rtol=1, atol=self.tolerance):
+                    continue
+                for i, dig in zip(indices, new_targ_digits):
+                    new_digits[i] = dig
+                self.buffer_state[tuple(new_digits)] += amplitude * result_amp
+        self.state, self.buffer_state = self.buffer_state, self.state
+        if len(self.state) > self.path_limit:
+            raise PathLimitError
+
+    def _sample_measurement(self, indices, repetitions):
+        indices = list(indices)
+        amps = np.array(list(self.state.values()), dtype=complex)
+        states = np.array(list(self.state.keys()), dtype=np.uint8)
+        probs = np.abs(amps) ** 2
+        choice_i = np.random.choice(np.arange(len(probs)),
+                                    size=repetitions,
+                                    replace=True,
+                                    p=probs)
+        choice = states[choice_i,:][:,indices]
+        return choice, indices, states, amps
+
+    def sample_measurement(self, indices, repetitions=1):
+        return _sample_measurement(indices, repetitions)[0]
+
+    def apply_measurement(self, indices):
+        choice, indices, states, amps = self._sample_measurement(indices, 1)
+        choice = choice[0]
+        mask = np.all(states[:,indices] == choice, axis=1)
+        amps[mask] /= np.linalg.norm(amps[mask])
+        self.state.clear()
+        self.state.update(dict(zip(map(tuple, states[mask]), amps[mask])))
+        return choice
