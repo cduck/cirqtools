@@ -6,6 +6,9 @@ from .. import qudit
 __all__ = (
     'PlusOne',
     'MinusOne',
+    'Chrest_3',
+    'Z1',
+    'Z2',
     'F01',
     'F02',
     'F12',
@@ -34,6 +37,9 @@ __all__ = (
 
 PlusOne = qudit.PlusGate(3)
 MinusOne = qudit.PlusGate(3, -1)
+Chrest_3 = qudit.Chrestenson(3)
+Z1 = qudit.ZGate(3,increment=1)
+Z2 = qudit.ZGate(3,increment=2)
 F01 = qudit.FlipGate(3, 0, 1)  # or SingleQuditSubspaceGate(cirq.X, 3, (0, 1))
 F02 = qudit.FlipGate(3, 0, 2)  # or SingleQuditSubspaceGate(cirq.X, 3, (0, 2))
 F12 = qudit.FlipGate(3, 1, 2)  # or SingleQuditSubspaceGate(cirq.X, 3, (1, 2))

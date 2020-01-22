@@ -7,6 +7,8 @@ __all__ = (
     'SubspaceSwapGate',
     'SingleQuditSubspaceGate',
     'FlipGate',
+    'Chrestenson',
+    'ZGate',
 )
 
 
@@ -136,3 +138,44 @@ class FlipGate(SingleQuditSubspaceGate):
             return '[{}<->{}]'.format(self.flip_a, self.flip_b)
         return cirq.CircuitDiagramInfo((
             '[{}<->{}]'.format(self.flip_a, self.flip_b),))
+
+class Chrestenson(cirq.SingleQubitGate):
+    def __init__(self,dimension):
+        self.dimension = dimension
+
+    def _qid_shape_(self):
+        return (self.dimension,)
+
+    def _unitary_(self):
+        idx = np.arange(self.dimension, dtype=np.complex128)
+        u = idx[:, np.newaxis] * idx[np.newaxis, :]
+        u *= 2j*np.pi/self.dimension
+        np.exp(u, out=u)
+        u /= np.sqrt(self.dimension)
+        return u
+
+    def _circuit_diagram_info_(self,args):
+        return cirq.CircuitDiagramInfo(('[C_r]',))
+    
+
+class ZGate(cirq.SingleQubitGate):
+    def __init__(self,dimension,increment=1):
+        self.dimension = dimension
+        self.increment = increment
+
+    def _qid_shape_(self):
+        return (self.dimension,)
+
+    def _unitary_(self):
+        u = np.diag(np.exp(np.linspace(0, self.increment*2j*np.pi, self.dimension,endpoint=False, dtype=np.complex128)))
+        
+        return u
+
+    def __pow__(self, exponent):
+        if exponent % 1 == 0:
+            return ZGate(self.dimension, self.increment * exponent)
+        return NotImplemented
+
+    def _circuit_diagram_info_(self,args):
+        return cirq.CircuitDiagramInfo(('[Z {:+d}]'.format(self.increment),))
+
