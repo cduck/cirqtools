@@ -14,4 +14,4 @@ cirqtools is a Python package where I keep common code between my various quantu
 
 `cirqtools.ClassicalSimulator` will efficiently simulate any classical reversible circuit (any circuit containing gates whose unitaries are permutation matrices).
 
-`cirqtools.FeynmanPathSimulator` is an inefficient attempt attempt at a Feynman Path-based simulator.
+`cirqtools.FeynmanPathSimulator` is an inefficient attempt at a Feynman Path-based simulator.
