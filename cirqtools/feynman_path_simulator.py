@@ -69,29 +69,27 @@ class FeynmanPathSimulator(cirq.SimulatesSamples,
                 "Can't simulate unknown operations that don't specify a"
                 "unitary or a decomposition. {!r}".format(bad_op))
 
-        def keep(potential_op):
-            return (cirq.has_unitary(potential_op) or
-                    cirq.has_mixture(potential_op) or
-                    cirq.is_measurement(potential_op) or
-                    cirq.op_gate_isinstance(potential_op, cirq.ResetChannel))
+        def keep(op):
+            return ((cirq.num_qubits(op) <= 32 and (cirq.has_unitary(op) or
+                                                    cirq.has_mixture(op))) or
+                    cirq.is_measurement(op) or
+                    isinstance(op.gate, cirq.ResetChannel))
 
         def simulate_op(op, temp_state):
             indices = [qubit_map[q] for q in op.qubits]
-            if cirq.op_gate_isinstance(op, cirq.ResetChannel):
-                self._simulate_reset(op, cirq.ResetChannel)
+            if isinstance(op.gate, cirq.ResetChannel):
+                self._simulate_reset(op, temp_state, indices)
             elif cirq.is_measurement(op):
                 if perform_measurements:
                     self._simulate_measurement(
                         op, temp_state, indices, measurements)
-            elif cirq.has_mixture(op):
-                self._simulate_mixture(op, temp_state, indices)
             else:
                 if cirq.num_qubits(op) <= 3:
-                    self._simulate_unitary(op, temp_state, indices)
+                    self._simulate_from_matrix(op, temp_state, indices)
                 else:
                     decomp_ops = cirq.decompose_once(op, default=None)
                     if decomp_ops is None:
-                        self._simulate_unitary(op, temp_state, indices)
+                        self._simulate_from_matrix(op, temp_state, indices)
                     else:
                         for sub_op in cirq.flatten_op_tree(decomp_ops):
                             simulate_op(sub_op, temp_state)
@@ -104,9 +102,9 @@ class FeynmanPathSimulator(cirq.SimulatesSamples,
                 simulate_op(op, state)
             yield FeynmanPathSimulatorStep(state, measurements, qubit_map)
 
-    def _simulate_reset(op, state, indices):
-        reset = cirq.op_gate_of_type(op, cirq.ResetChannel)
-        if reset:
+    def _simulate_reset(self, op, state, indices):
+        is_reset = isinstance(op.gate, cirq.ResetChannel)
+        if is_reset:
             meas = state.apply_measurement(indices)[0]
             if meas != 0:
                 # Reset to 0
@@ -114,14 +112,20 @@ class FeynmanPathSimulator(cirq.SimulatesSamples,
                 state.apply_unitary(indices, unitary)
 
     def _simulate_measurement(self, op, state, indices, measurements):
-        meas = cirq.op_gate_of_type(op, cirq.MeasurementGate)
-        if meas:
-            invert_mask = meas.full_invert_mask()
+        is_meas = isinstance(op.gate, cirq.MeasurementGate)
+        if is_meas:
+            invert_mask = op.gate.full_invert_mask()
             bits = state.apply_measurement(indices)
             corrected = [bit ^ (bit < 2 and mask)
                          for bit, mask in zip(bits, invert_mask)]
-            key = cirq.measurement_key(meas)
+            key = cirq.measurement_key(op.gate)
             measurements[key].extend(corrected)
+
+    def _simulate_from_matrix(self, op, state, indices):
+        if cirq.has_unitary(op):
+            self._simulate_unitary(op, state, indices)
+        else:
+            self._simulate_mixture(op, state, indices)
 
     def _simulate_mixture(self, op, state, indices):
         probs, unitaries = zip(*cirq.mixture(op))

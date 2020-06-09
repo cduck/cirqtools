@@ -156,7 +156,6 @@ class Chrestenson(cirq.SingleQubitGate):
 
     def _circuit_diagram_info_(self,args):
         return cirq.CircuitDiagramInfo(('[C_r]',))
-    
 
 class ZGate(cirq.SingleQubitGate):
     def __init__(self,dimension,increment=1):
@@ -167,8 +166,9 @@ class ZGate(cirq.SingleQubitGate):
         return (self.dimension,)
 
     def _unitary_(self):
-        u = np.diag(np.exp(np.linspace(0, self.increment*2j*np.pi, self.dimension,endpoint=False, dtype=np.complex128)))
-        
+        u = np.diag(np.exp(np.linspace(0, self.increment*2j*np.pi,
+                                       self.dimension, endpoint=False,
+                                       dtype=np.complex128)))
         return u
 
     def __pow__(self, exponent):

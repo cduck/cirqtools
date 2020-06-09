@@ -37,5 +37,5 @@ class SimpleExtensionGate(cirq.Gate):
         return f'SimpleExtensionGate({self.gate!r}, {self.new_qid_shape!r})'
 
 
-def simple_extention(gate, *qids):
+def simple_extension(gate, *qids):
     return SimpleExtensionGate(gate, cirq.qid_shape(qids)).on(*qids)
